@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional Security Audit Dashboard - Pentest Platform">
+    <title>Professional Security Audit | Pentest Platform</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Dashboard specific styles */
+        .pentest-dashboard {
+            padding: 30px 0;
+        }
+        
+        .audit-controls {
+            background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #3d3d5c;
+        }
+        
+        .target-input {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .target-input input {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px 20px;
+            background: #0a0a1a;
+            border: 2px solid #3d3d5c;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .target-input input:focus {
+            outline: none;
+            border-color: #ff4757;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.2);
+        }
+        
+        .start-audit-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .start-audit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 71, 87, 0.3);
+        }
+        
+        .start-audit-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .consent-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 71, 87, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #ff4757;
+        }
+        
+        .consent-check input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .consent-check label {
+            color: #ff4757;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .scan-progress {
+            background: #1e1e2f;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #3d3d5c;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #0a0a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .findings-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .finding-box {
+            background: #1e1e2f;
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #3d3d5c;
+            min-height: 200px;
+        }
+        
+        .finding-box h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+        
+        .finding-box.critical {
+            border-color: #ff4757;
+        }
+        
+        .finding-box.critical h3 {
+            color: #ff4757;
+            border-color: #ff4757;
+        }
+        
+        .finding-box.high {
+            border-color: #ff6348;
+        }
+        
+        .finding-box.high h3 {
+            color: #ff6348;
+            border-color: #ff6348;
+        }
+        
+        .finding-box.medium {
+            border-color: #ffa502;
+        }
+        
+        .finding-box.medium h3 {
+            color: #ffa502;
+            border-color: #ffa502;
+        }
+        
+        .finding-box.low {
+            border-color: #2ed573;
+        }
+        
+        .finding-box.low h3 {
+            color: #2ed573;
+            border-color: #2ed573;
+        }
+        
+        .finding-item {
+            background: #0a0a1a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+        
+        .finding-item.critical-item { border-left-color: #ff4757; }
+        .finding-item.high-item { border-left-color: #ff6348; }
+        .finding-item.medium-item { border-left-color: #ffa502; }
+        .finding-item.low-item { border-left-color: #2ed573; }
+        
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .severity-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .severity-badge.critical { background: #ff4757; color: white; }
+        .severity-badge.high { background: #ff6348; color: white; }
+        .severity-badge.medium { background: #ffa502; color: white; }
+        .severity-badge.low { background: #2ed573; color: white; }
+        
+        .report-section {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .report-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .report-btn.export {
+            background: linear-gradient(135deg, #2ed573, #7bed9f);
+            color: #0a0a1a;
+        }
+        
+        .report-btn.share {
+            background: linear-gradient(135deg, #1e90ff, #70a1ff);
+            color: white;
+        }
+        
+        .report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .live-console {
+            background: #0a0a1a;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            color: #2ed573;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #3d3d5c;
+        }
+        
+        .console-line {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #2ed573;
+            padding-left: 10px;
+        }
+        
+        .console-line.error {
+            color: #ff4757;
+            border-left-color: #ff4757;
+        }
+        
+        .console-line.warning {
+            color: #ffa502;
+            border-left-color: #ffa502;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-bug"></i>
+                    <h1>Professional Security Audit</h1>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-search"></i> Quick Scan
+                    </a>
+                    <a href="/pentest-dashboard" class="nav-link active">
+                        <i class="fas fa-bug"></i> Professional Audit
+                    </a>
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="main-content">
+        <div class="container">
+            <div class="pentest-dashboard">
+                
+                <!-- Audit Controls -->
+                <div class="audit-controls">
+                    <h2>
+                        <i class="fas fa-crosshairs"></i>
+                        Start Security Audit
+                    </h2>
+                    
+                    <div class="target-input">
+                        <input 
+                            type="url" 
+                            id="target-url" 
+                            placeholder="Target URL (e.g., https://client-site.com)"
+                            autocomplete="off"
+                        >
+                        <input 
+                            type="email" 
+                            id="owner-email" 
+                            placeholder="Site Owner Email"
+                            autocomplete="off"
+                        >
+                        <button onclick="startProfessionalAudit()" class="start-audit-btn" id="startAuditBtn">
+                            <i class="fas fa-play"></i>
+                            Start Full Audit
+                        </button>
+                    </div>
+                    
+                    <div class="consent-check">
+                        <input type="checkbox" id="consent" required>
+                        <label for="consent">
+                            <i class="fas fa-gavel"></i>
+                            I confirm I have WRITTEN AUTHORIZATION to test this target
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Scan Progress -->
+                <div class="scan-progress" id="scanProgress" style="display: none;">
+                    <h3><i class="fas fa-spinner fa-spin"></i> Audit in Progress</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span id="currentPhase">Initializing...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    
+                    <!-- Live Console -->
+                    <div class="live-console" id="liveConsole">
+                        <div class="console-line">[INFO] Starting professional security audit...</div>
+                    </div>
+                </div>
+
+                <!-- Findings -->
+                <div id="findingsSection" style="display: none;">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Security Findings</h2>
+                    
+                    <div class="findings-container">
+                        <div class="finding-box critical">
+                            <h3>🔴 Critical</h3>
+                            <div id="critical-list">
+                                <p style="color: #888;">No critical issues found</p>
+                            </div>
+                        </div>
+                        
+                        <div class="finding-box high">
+                            <h3>🟠 High</h3>
+                            <div id="high-list">
+                                <p style="color: #888;">No high issues found</p>
+                            </div>
+                        </div>
+                        
+                        <div class="finding-box medium">
+                            <h3>🟡 Medium</h3>
+                            <div id="medium-list">
+                                <p style="color: #888;">No medium issues found</p>
+                            </div>
+                        </div>
+                        
+                        <div class="finding-box low">
+                            <h3>🟢 Low / Info</h3>
+                            <div id="low-list">
+                                <p style="color: #888;">No low issues found</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Chart -->
+                    <div class="chart-section">
+                        <h3><i class="fas fa-chart-pie"></i> Vulnerability Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="severityChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Report Actions -->
+                    <div class="report-section">
+                        <button onclick="exportPDFReport()" class="report-btn export">
+                            <i class="fas fa-file-pdf"></i>
+                            Export PDF Report
+                        </button>
+                        <button onclick="shareFindings()" class="report-btn share">
+                            <i class="fas fa-share-alt"></i>
+                            Share with Client
+                        </button>
+                        <button onclick="downloadJSON()" class="report-btn export">
+                            <i class="fas fa-code"></i>
+                            Download JSON
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audit History -->
+                <div class="audit-history" style="margin-top: 30px;">
+                    <h2><i class="fas fa-history"></i> Recent Audits</h2>
+                    <div id="auditHistory" style="color: #888;">
+                        <p>No previous audits found. Start your first professional audit!</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <i class="fas fa-shield-haltered"></i>
+                    <span>Professional Pentest Platform v2.0</span>
+                </div>
+                <div class="footer-center">
+                    <span>Authorized Security Testing Only</span>
+                </div>
+                <div class="footer-right">
+                    <span>© 2024 CyberSec Professional</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/pentest_app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="Professional Web Security Analyzer - Pentest Tool">
+    <meta name="author" content="CyberSec Professional">
+    <title>Web Security Analyzer | Professional Pentest Platform</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Critical inline styles for faster loading */
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff4757;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            display: none;
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shield-haltered"></i>
+                    <h1>Web Security Analyzer</h1>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="nav-link active">
+                        <i class="fas fa-search"></i> Quick Scan
+                    </a>
+                    <a href="/pentest-dashboard" class="nav-link">
+                        <i class="fas fa-bug"></i> Professional Audit
+                    </a>
+                    <a href="#" class="nav-link" id="loginBtn">
+                        <i class="fas fa-user-shield"></i> Login
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Hero Section -->
+            <div class="hero">
+                <h2 class="hero-title">
+                    <i class="fas fa-bolt"></i> 
+                    Web Intelligence SaaS Platform
+                </h2>
+                <p class="hero-subtitle">
+                    Analyze website security, performance, and vulnerabilities instantly
+                </p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalScans">0</span>
+                        <span class="stat-label">Scans Today</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="avgScore">-</span>
+                        <span class="stat-label">Average Score</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="threatsBlocked">0</span>
+                        <span class="stat-label">Threats Detected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Box -->
+            <div class="input-section">
+                <div class="input-box">
+                    <div class="input-wrapper">
+                        <i class="fas fa-globe input-icon"></i>
+                        <input 
+                            type="url" 
+                            id="url" 
+                            class="url-input" 
+                            placeholder="Enter website URL (e.g., https://example.com)"
+                            autocomplete="off"
+                            autofocus
+                        >
+                        <button onclick="analyze()" class="analyze-btn" id="analyzeBtn">
+                            <i class="fas fa-search"></i>
+                            <span>Analyze Now</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Quick URLs -->
+                    <div class="quick-urls">
+                        <span class="quick-label">Quick test:</span>
+                        <button onclick="setUrl('https://example.com')" class="quick-btn">example.com</button>
+                        <button onclick="setUrl('https://httpbin.org')" class="quick-btn">httpbin.org</button>
+                        <button onclick="setUrl('https://github.com')" class="quick-btn">github.com</button>
+                    </div>
+                </div>
+                
+                <!-- Error Message -->
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="errorText"></span>
+                </div>
+                
+                <!-- Loader -->
+                <div class="loader" id="loader"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                
+                <!-- Score Card -->
+                <div class="score-card" id="scoreCard">
+                    <div class="grade-circle" id="gradeCircle">
+                        <span id="grade">-</span>
+                    </div>
+                    <div class="score-info">
+                        <h3>Overall Score</h3>
+                        <p id="total">0</p>
+                        <div class="score-bar">
+                            <div class="score-fill" id="scoreFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <i class="fas fa-tachometer-alt metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Performance</h3>
+                            <p id="perf">-</p>
+                            <span class="metric-label">/100</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <i class="fas fa-shield-alt metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Security</h3>
+                            <p id="sec">-</p>
+                            <span class="metric-label">/100</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <i class="fas fa-clock metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Load Time</h3>
+                            <p id="load">-</p>
+                            <span class="metric-label">seconds</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <i class="fas fa-weight-hanging metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Page Size</h3>
+                            <p id="size">-</p>
+                            <span class="metric-label">KB</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <i class="fas fa-signal metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Status Code</h3>
+                            <p id="status">-</p>
+                            <span class="metric-label">HTTP</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <i class="fas fa-heading metric-icon"></i>
+                        <div class="metric-content">
+                            <h3>Page Title</h3>
+                            <p id="title">-</p>
+                            <span class="metric-label">title</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-section">
+                    <h3><i class="fas fa-chart-bar"></i> Performance vs Security</h3>
+                    <div class="chart-container">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Security Details -->
+                <div class="security-details" id="securityDetails">
+                    <h3><i class="fas fa-shield-alt"></i> Security Headers Check</h3>
+                    <div class="security-grid" id="securityGrid"></div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="recommendations" id="recommendations">
+                    <h3><i class="fas fa-lightbulb"></i> Recommendations</h3>
+                    <div class="rec-list" id="recList"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button onclick="window.location.href='/pentest-dashboard'" class="action-btn primary">
+                        <i class="fas fa-bug"></i> Full Professional Audit
+                    </button>
+                    <button onclick="exportReport()" class="action-btn secondary">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                    <button onclick="shareResults()" class="action-btn secondary">
+                        <i class="fas fa-share-alt"></i> Share Results
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <i class="fas fa-shield-haltered"></i>
+                    <span>Web Security Analyzer v2.0</span>
+                </div>
+                <div class="footer-center">
+                    <span>Professional Pentesting Platform</span>
+                </div>
+                <div class="footer-right">
+                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
