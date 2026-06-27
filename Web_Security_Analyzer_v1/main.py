@@ -1243,10 +1243,10 @@ def internal_error(error):
 if __name__ == "__main__":
     print("=" * 60)
     print("✅ Professional Pentest Platform v2.0")
-    print(f"🌐 http://127.0.0.1:5050")
-    print(f"🌐 http://10.137.54.216:5050")
     print("=" * 60)
-    print("📝 Default login: admin / admin123")
+    print("⚠️  Ensure environment variables are set (see .env.example).")
     print("=" * 60)
-    
-    socketio.run(app, debug=False, port=8080, host='0.0.0.0', allow_unsafe_werkzeug=True)
+
+    port = int(os.environ.get('PORT', '8080'))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    socketio.run(app, debug=debug, port=port, host='0.0.0.0', allow_unsafe_werkzeug=True)

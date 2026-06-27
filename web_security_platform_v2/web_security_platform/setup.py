@@ -6,6 +6,7 @@ Creates the database and a demo admin user
 import asyncio
 import sys
 import os
+import secrets
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -32,10 +33,12 @@ async def setup():
         if existing:
             print("ℹ️  Admin user already exists")
         else:
+            # Use provided ADMIN_PASSWORD or generate a secure one
+            admin_password = os.environ.get('ADMIN_PASSWORD') or secrets.token_urlsafe(12)
             admin = User(
                 username="admin",
                 email="admin@webguard.local",
-                hashed_password=hash_password("Admin@1234"),
+                hashed_password=hash_password(admin_password),
                 role=UserRole.ADMIN,
                 is_active=True,
                 is_verified=True,
@@ -44,7 +47,7 @@ async def setup():
             await db.commit()
             print("✅ Admin user created")
             print("   Username: admin")
-            print("   Password: Admin@1234")
+            print(f"   Password: {admin_password}")
             print("   ⚠️  Change password after first login!")
 
     print("\n🚀 Setup complete! Run: uvicorn main:app --reload")

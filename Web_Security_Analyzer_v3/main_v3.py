@@ -2679,12 +2679,17 @@ if __name__ == '__main__':
     print(f"Python: {sys.version}")
     print("=" * 60)
 
-    # Create default admin if not exists
-    try:
-        db_manager.create_user('admin', 'Admin123!', 'admin@websecurity.app', 'admin')
-        print("✅ Default admin user created: admin / Admin123!")
-    except Exception:
-        print("ℹ️ Default admin user already exists")
+    # Optionally create default admin if explicitly allowed via environment
+    if os.environ.get('CREATE_DEFAULT_ADMIN', 'False').lower() == 'true':
+        admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD')
+        if admin_password:
+            try:
+                db_manager.create_user('admin', admin_password, 'admin@websecurity.app', 'admin')
+                print("✅ Default admin user created from DEFAULT_ADMIN_PASSWORD environment value.")
+            except Exception:
+                print("ℹ️ Default admin user already exists or creation failed.")
+        else:
+            print("⚠️ CREATE_DEFAULT_ADMIN is true but DEFAULT_ADMIN_PASSWORD is not set; skipping creation. Use setup script to create admin.")
 
     # Run application
     socketio.run(
